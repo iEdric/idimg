@@ -5,12 +5,13 @@ import { ChatInterface } from './components/ChatInterface';
 import { PhotoResult } from './components/PhotoResult';
 import { useAppState } from './hooks/useAppState';
 import { usePhotoProcessing } from './hooks/usePhotoProcessing';
+import { UploadedImage } from './hooks/useAppState';
 
 function App() {
   const { state, actions } = useAppState();
-  const { processPhoto, parseInstruction } = usePhotoProcessing();
+  const { processPhoto } = usePhotoProcessing();
 
-  const handleImageUpload = (image: typeof state.uploadedImage) => {
+  const handleImageUpload = (image: UploadedImage) => {
     actions.setUploadedImage(image);
   };
 
@@ -19,7 +20,7 @@ function App() {
     actions.setProcessingStep('complete');
   };
 
-  const handleProgressUpdate = (step: string, progress: number) => {
+  const handleProgressUpdate = (step: string, _progress: number) => {
     // 可以根据progress值设置不同的处理步骤
     if (step.includes('人脸')) {
       actions.setProcessingStep('face_detection');
@@ -47,8 +48,17 @@ function App() {
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <UploadZone onImageUpload={handleImageUpload} />
           </div>
+        ) : state.processedImage ? (
+          // 完成状态 - 只显示结果
+          <div className="flex justify-center">
+            <PhotoResult
+              imageUrl={state.processedImage}
+              onDownload={() => handleDownload(state.processedImage!)}
+              onReset={actions.reset}
+            />
+          </div>
         ) : (
-          // 已上传图片状态
+          // 处理状态 - 显示预览和聊天
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
               <PreviewArea
@@ -71,17 +81,10 @@ function App() {
             </div>
           </div>
         )}
-
-        {state.processedImage && (
-          <PhotoResult
-            imageUrl={state.processedImage}
-            onDownload={() => handleDownload(state.processedImage!)}
-            onReset={actions.reset}
-          />
-        )}
       </main>
     </div>
   );
 }
 
 export default App;
+export type { UploadedImage };

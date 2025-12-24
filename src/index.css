@@ -65,11 +65,11 @@
   }
 
   .btn-primary {
-    @apply bg-primary hover:bg-primary-dark text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md;
+    @apply bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02];
   }
 
   .btn-secondary {
-    @apply bg-surface hover:bg-surface-hover text-text-primary font-medium px-6 py-3 rounded-lg border border-border transition-all duration-200;
+    @apply bg-surface hover:bg-surface-hover text-text-primary font-medium px-6 py-3 rounded-lg border border-border transition-all duration-200 hover:shadow-sm;
   }
 
   .card {
@@ -78,5 +78,17 @@
 
   .card:hover {
     @apply shadow-md;
+  }
+
+  .upload-zone {
+    @apply relative border-2 border-dashed border-border rounded-xl p-8 text-center transition-all duration-200 bg-gradient-to-br from-surface to-surface-hover;
+  }
+
+  .upload-zone:hover {
+    @apply border-primary bg-gradient-to-br from-primary/5 to-accent/5 scale-[1.02] shadow-lg;
+  }
+
+  .upload-zone.drag-over {
+    @apply border-primary bg-gradient-to-br from-primary/10 to-accent/10 scale-[1.02] ring-2 ring-primary ring-offset-2 shadow-xl;
   }
 }

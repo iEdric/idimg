@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
-import { UploadedImage } from '../App';
+import { UploadedImage } from '../hooks/useAppState';
 import { PHOTO_SUGGESTIONS, API_CONFIG, UI_CONFIG } from '../constants';
 import { useChatMessages } from '../hooks/useChatMessages';
 import { usePhotoProcessing } from '../hooks/usePhotoProcessing';
@@ -20,9 +20,9 @@ export const ChatInterface = ({
   onProgressUpdate
 }: ChatInterfaceProps) => {
   const { processPhoto, parseInstruction } = usePhotoProcessing();
-  const initialMessage = {
+  const initialMessage: Omit<Message, 'id' | 'timestamp'> = {
     content: '您好！我可以帮您生成专业的证件照。请告诉我您想要什么样的证件照效果，比如尺寸、背景颜色等。',
-    role: 'assistant' as const,
+    role: 'assistant',
   };
 
   const {

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, Image as ImageIcon, X } from 'lucide-react';
-import { UploadedImage } from '../App';
+import { UploadedImage } from '../hooks/useAppState';
 import { useImageProcessing } from '../hooks/useImageProcessing';
 import { useFileValidation } from '../hooks/useFileValidation';
 import { handleAsyncError, createErrorMessage } from '../utils/errorHandling';
@@ -32,7 +32,7 @@ export const UploadZone = ({ onImageUpload }: UploadZoneProps) => {
     setError(null);
     setIsProcessing(true);
 
-    const result = await handleAsyncError(async () => {
+    await handleAsyncError(async () => {
       // 先验证文件
       const validation = await validateImageFile(file);
       if (!validation.isValid) {
@@ -99,9 +99,14 @@ export const UploadZone = ({ onImageUpload }: UploadZoneProps) => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-lg mx-auto">
       <div
-        className={`upload-zone cursor-pointer ${isDragOver ? 'drag-over' : ''}`}
+        className={`
+          upload-zone cursor-pointer transition-all duration-300 ease-in-out
+          hover:scale-[1.02] hover:shadow-xl
+          ${isDragOver ? 'drag-over ring-2 ring-primary ring-offset-2' : ''}
+          ${isProcessing ? 'pointer-events-none' : ''}
+        `}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -113,68 +118,107 @@ export const UploadZone = ({ onImageUpload }: UploadZoneProps) => {
           accept="image/*"
           onChange={handleFileSelect}
           className="hidden"
+          disabled={isProcessing}
         />
 
         {previewImage ? (
-          <div className="space-y-4">
-            <div className="relative inline-block">
+          <div className="space-y-6 animate-fade-in">
+            <div className="relative inline-block group">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300" />
               <img
                 src={previewImage}
                 alt="Preview"
-                className="max-w-full max-h-48 rounded-lg shadow-sm"
+                className="relative max-w-full max-h-56 rounded-xl shadow-lg border border-border/50"
               />
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleRemove();
                 }}
-                className="absolute -top-2 -right-2 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center hover:bg-error/80 transition-colors"
-                disabled={isProcessing}
+                className="
+                  absolute -top-3 -right-3 w-8 h-8
+                  bg-error text-white rounded-full
+                  flex items-center justify-center
+                  shadow-lg hover:shadow-xl
+                  hover:bg-error/90 hover:scale-110
+                  transition-all duration-200
+                  opacity-0 group-hover:opacity-100
+                "
               >
-                <X className="w-3 h-3" />
+                <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-text-secondary text-sm">
-              点击更换图片或拖拽新图片到此处
-            </p>
+            <div className="text-center space-y-2">
+              <p className="text-text-primary font-medium">
+                图片已上传
+              </p>
+              <p className="text-text-secondary text-sm">
+                点击更换图片或拖拽新图片到此处
+              </p>
+            </div>
           </div>
         ) : isProcessing ? (
-          <div className="space-y-4">
-            <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="space-y-6 animate-fade-in">
+            <div className="relative">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary to-primary-dark rounded-2xl flex items-center justify-center shadow-lg">
+                <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-2xl blur-xl animate-pulse" />
             </div>
-            <div>
-              <p className="text-lg font-medium text-text-primary mb-2">
+            <div className="text-center space-y-2">
+              <p className="text-lg font-semibold text-text-primary">
                 正在处理图片...
               </p>
               <p className="text-text-secondary text-sm">
-                请稍候
+                AI正在分析您的照片
               </p>
+              <div className="w-full bg-surface rounded-full h-2 mt-4">
+                <div className="bg-gradient-to-r from-primary to-accent h-2 rounded-full animate-pulse" style={{width: '60%'}} />
+              </div>
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-              <ImageIcon className="w-8 h-8 text-primary" />
+          <div className="space-y-6 animate-fade-in">
+            <div className="relative group">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary to-primary-dark rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+                <ImageIcon className="w-10 h-10 text-white" />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
-            <div>
-              <p className="text-lg font-medium text-text-primary mb-2">
-                上传您的照片
-              </p>
-              <p className="text-text-secondary text-sm">
-                支持 JPG、PNG、WebP 格式，最大 10MB
-              </p>
-            </div>
-            <div className="btn-primary inline-flex items-center gap-2">
-              <Upload className="w-4 h-4" />
-              选择图片
+
+            <div className="text-center space-y-3">
+              <div>
+                <p className="text-xl font-semibold text-text-primary mb-2">
+                  上传您的照片
+                </p>
+                <p className="text-text-secondary text-sm leading-relaxed">
+                  支持 JPG、PNG、WebP 格式，最大 10MB
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button className="btn-primary inline-flex items-center gap-2 px-6 py-3 text-base font-medium">
+                  <Upload className="w-5 h-5" />
+                  选择图片
+                </button>
+                <div className="text-center sm:text-left">
+                  <p className="text-xs text-text-muted">
+                    或拖拽图片到此处
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="mt-4 p-3 bg-error/10 border border-error/20 rounded-lg">
-            <p className="text-error text-sm">{error}</p>
+          <div className="mt-6 p-4 bg-error/10 border border-error/20 rounded-xl animate-fade-in">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-error/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <X className="w-4 h-4 text-error" />
+              </div>
+              <p className="text-error text-sm font-medium">{error}</p>
+            </div>
           </div>
         )}
       </div>
