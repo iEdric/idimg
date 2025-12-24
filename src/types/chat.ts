@@ -17,3 +17,18 @@ export interface SendMessageParams {
   onSuccess?: (response: string) => void;
   onError?: (error: string) => void;
 }
+
+// 新增的类型定义
+export interface ProcessingOptions {
+  size: '1inch' | '2inch' | 'passport' | 'custom';
+  backgroundColor: string;
+  format: 'png' | 'jpg';
+  quality: number;
+}
+
+export interface ProcessedImage {
+  url: string;
+  size: { width: number; height: number };
+  format: string;
+  createdAt: Date;
+}

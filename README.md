@@ -1,115 +1,120 @@
-# React Chatbot Template
+# AI证件照生成器
 
-A beautiful, modern chatbot interface built with React, TypeScript, and Tailwind CSS. 
+一个基于AI的智能证件照生成工具，使用对话形式编辑图片，自动生成专业证件照。
 
 ## Features
 
-- ⚡ **Fast Performance** - Built with Vite for lightning-fast development and builds
-- 🔧 **TypeScript** - Full type safety and excellent developer experience
-- 🎯 **Responsive** - Works perfectly on desktop and mobile devices
-- 🌙 **Dark Theme** - Elegant dark theme with proper contrast ratios
-- 💬 **Interactive Chat** - Real-time chat interface with loading states
-- 🚀 **Modern Stack** - React 18, TypeScript, Tailwind CSS, Vite
+- 🤖 **AI对话编辑** - 通过自然语言指令调整图片效果
+- 📸 **智能生成** - 自动裁切和优化证件照
+- 🎨 **多种样式** - 支持不同尺寸和背景颜色
+- ⚡ **快速处理** - 实时预览和即时生成
+- 📱 **响应式设计** - 完美适配桌面和移动设备
+- 🎯 **专业品质** - 高分辨率输出，适合各种用途
+- 🚀 **现代界面** - 简洁大气的设计风格
 
-## Getting Started
+## 快速开始
 
-### Prerequisites
+### 环境要求
 
-- Node.js 16.0 or later
-- npm or yarn
+- Node.js 16.0 或更高版本
+- npm 或 yarn
 
-### Installation
+### 安装步骤
 
-1. Clone the repository:
+1. 克隆项目：
 ```bash
 git clone <repository-url>
-cd react-chatbot-template
+cd ai-id-photo-generator
 ```
 
-2. Install dependencies:
+2. 安装依赖：
 ```bash
 npm install
 ```
 
-3. Start the development server:
+3. 启动开发服务器：
 ```bash
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:3000`
+4. 在浏览器中打开 `http://localhost:3000`
 
-## Available Scripts
+## 可用脚本
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
+- `npm run dev` - 启动开发服务器
+- `npm run build` - 构建生产版本
+- `npm run preview` - 预览生产构建
+- `npm run lint` - 运行ESLint代码检查
 
-## Project Structure
+## 项目结构
 
 ```
 src/
 ├── components/
-│   ├── Chat.tsx          # Main chat interface
-│   ├── ChatInput.tsx     # Message input component
-│   ├── ChatMessage.tsx   # Individual message component
-│   └── EmptyState.tsx    # Welcome screen with suggestions
+│   ├── Header.tsx        # 页面头部
+│   ├── UploadZone.tsx    # 图片上传区域
+│   ├── PreviewArea.tsx   # 图片预览区域
+│   ├── ChatInterface.tsx # AI对话界面
+│   └── PhotoResult.tsx   # 结果展示区域
 ├── types/
-│   └── chat.ts          # TypeScript type definitions
-├── App.tsx              # Root component
-├── main.tsx            # Application entry point
-└── index.css           # Global styles and Tailwind imports
+│   └── chat.ts          # TypeScript类型定义
+├── App.tsx              # 根组件
+├── main.tsx            # 应用入口
+└── index.css           # 全局样式
 ```
 
-## Customization
+## 功能说明
 
-### Colors
-The color scheme is defined in `tailwind.config.js`. You can customize the chat colors by modifying the theme:
+### 支持的证件照类型
+- **1寸证件照** - 标准尺寸 (33×48mm)
+- **2寸证件照** - 大尺寸 (35×49mm)
+- **护照照片** - 国际标准 (35×45mm)
+- **自定义尺寸** - 灵活调整
+
+### AI对话指令示例
+- "生成1寸证件照，白色背景"
+- "调整为蓝色背景，优化面部光线"
+- "生成护照尺寸，红色背景"
+- "美化图片，调整对比度"
+
+## 自定义配置
+
+### 颜色主题
+颜色配置在 `tailwind.config.js` 中定义：
 
 ```javascript
-theme: {
-  extend: {
-    colors: {
-      'chat-bg': '#343541',        // Main background
-      'chat-sidebar': '#202123',   // Sidebar background
-      'chat-input': '#40414f',     // Input background
-      // ... more colors
-    }
-  }
+colors: {
+  'primary': '#2563eb',      // 主色调
+  'background': '#ffffff',  // 背景色
+  'surface': '#f8fafc',      // 表面色
+  // ... 更多颜色
 }
 ```
 
-### API Integration
-The current implementation uses mock responses. To integrate with a real API:
+### API集成
+当前使用模拟响应。要接入真实API：
 
-1. Replace the `generateResponse` function in `Chat.tsx`
-2. Add your API endpoint and authentication
-3. Handle streaming responses if needed
+1. 替换 `ChatInterface.tsx` 中的 `generateResponse` 函数
+2. 添加图片处理API端点
+3. 实现图片上传和处理逻辑
 
-### Styling
-The interface uses Tailwind CSS for styling. You can customize the appearance by:
+## 技术栈
 
-- Modifying classes in component files
-- Adding new utility classes in `index.css`
-- Extending the Tailwind configuration
+- **React 18** - 现代React框架
+- **TypeScript** - 类型安全的开发体验
+- **Vite** - 下一代前端构建工具
+- **Tailwind CSS** - 实用优先的CSS框架
+- **Lucide React** - 精美的可定制图标
+- **ESLint** - 代码检查和格式化
 
-## Technologies Used
+## 贡献指南
 
-- **React 18** - Modern React with hooks and concurrent features
-- **TypeScript** - Type-safe development
-- **Vite** - Next-generation frontend tooling
-- **Tailwind CSS** - Utility-first CSS framework
-- **Lucide React** - Beautiful, customizable icons
-- **ESLint** - Code linting and formatting
+1. Fork 本项目
+2. 创建功能分支
+3. 提交更改
+4. 运行测试和代码检查
+5. 提交 Pull Request
 
-## Contributing
+## 许可证
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and linting
-5. Submit a pull request
-
-## License
-
-MIT License - see LICENSE file for details
+MIT License - 查看 LICENSE 文件了解详情
