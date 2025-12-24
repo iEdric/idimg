@@ -1,6 +1,9 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, Image as ImageIcon, X } from 'lucide-react';
 import { UploadedImage } from '../App';
+import { useImageProcessing } from '../hooks/useImageProcessing';
+import { useFileValidation } from '../hooks/useFileValidation';
+import { handleAsyncError, createErrorMessage } from '../utils/errorHandling';
 
 interface UploadZoneProps {
   onImageUpload: (image: UploadedImage) => void;
@@ -10,48 +13,51 @@ export const UploadZone = ({ onImageUpload }: UploadZoneProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const validateFile = (file: File): boolean => {
-    // 检查文件类型
-    if (!file.type.startsWith('image/')) {
-      setError('请上传图片文件');
-      return false;
-    }
+  const { processImageFile } = useImageProcessing();
+  const { validateImageFile } = useFileValidation();
 
-    // 检查文件大小 (限制为10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setError('图片大小不能超过10MB');
-      return false;
-    }
-
-    setError(null);
-    return true;
-  };
-
-  const processImage = useCallback((file: File) => {
-    if (!validateFile(file)) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setPreviewImage(result);
-
-      // 获取图片原始尺寸
-      const img = new Image();
-      img.onload = () => {
-        const uploadedImage: UploadedImage = {
-          id: Date.now().toString(),
-          file,
-          url: result,
-          originalSize: { width: img.width, height: img.height }
-        };
-        onImageUpload(uploadedImage);
-      };
-      img.src = result;
+  // 清理资源
+  useEffect(() => {
+    return () => {
+      if (previewImage && previewImage.startsWith('blob:')) {
+        URL.revokeObjectURL(previewImage);
+      }
     };
-    reader.readAsDataURL(file);
-  }, [onImageUpload]);
+  }, [previewImage]);
+
+  const processImage = useCallback(async (file: File) => {
+    setError(null);
+    setIsProcessing(true);
+
+    const result = await handleAsyncError(async () => {
+      // 先验证文件
+      const validation = await validateImageFile(file);
+      if (!validation.isValid) {
+        throw new Error(validation.error || '文件验证失败');
+      }
+
+      // 处理图片文件
+      const processedData = await processImageFile(file);
+
+      setPreviewImage(processedData.url);
+
+      const uploadedImage: UploadedImage = {
+        id: processedData.id,
+        file,
+        url: processedData.url,
+        originalSize: processedData.size
+      };
+
+      onImageUpload(uploadedImage);
+    }, (error) => {
+      setError(createErrorMessage(error));
+    });
+
+    setIsProcessing(false);
+  }, [processImageFile, validateImageFile, onImageUpload]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -123,6 +129,7 @@ export const UploadZone = ({ onImageUpload }: UploadZoneProps) => {
                   handleRemove();
                 }}
                 className="absolute -top-2 -right-2 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center hover:bg-error/80 transition-colors"
+                disabled={isProcessing}
               >
                 <X className="w-3 h-3" />
               </button>
@@ -130,6 +137,20 @@ export const UploadZone = ({ onImageUpload }: UploadZoneProps) => {
             <p className="text-text-secondary text-sm">
               点击更换图片或拖拽新图片到此处
             </p>
+          </div>
+        ) : isProcessing ? (
+          <div className="space-y-4">
+            <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+            <div>
+              <p className="text-lg font-medium text-text-primary mb-2">
+                正在处理图片...
+              </p>
+              <p className="text-text-secondary text-sm">
+                请稍候
+              </p>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">

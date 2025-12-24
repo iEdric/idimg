@@ -1,36 +1,40 @@
-import { useState } from 'react';
 import { Header } from './components/Header';
 import { UploadZone } from './components/UploadZone';
 import { PreviewArea } from './components/PreviewArea';
 import { ChatInterface } from './components/ChatInterface';
 import { PhotoResult } from './components/PhotoResult';
-
-export interface UploadedImage {
-  id: string;
-  file: File;
-  url: string;
-  originalSize: { width: number; height: number };
-}
+import { useAppState } from './hooks/useAppState';
+import { usePhotoProcessing } from './hooks/usePhotoProcessing';
 
 function App() {
-  const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null);
-  const [processedImage, setProcessedImage] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const { state, actions } = useAppState();
+  const { processPhoto, parseInstruction } = usePhotoProcessing();
 
-  const handleImageUpload = (image: UploadedImage) => {
-    setUploadedImage(image);
-    setProcessedImage(null);
+  const handleImageUpload = (image: typeof state.uploadedImage) => {
+    actions.setUploadedImage(image);
   };
 
   const handleImageProcess = (processedUrl: string) => {
-    setProcessedImage(processedUrl);
-    setIsProcessing(false);
+    actions.setProcessedImage(processedUrl);
+    actions.setProcessingStep('complete');
   };
 
-  const handleReset = () => {
-    setUploadedImage(null);
-    setProcessedImage(null);
-    setIsProcessing(false);
+  const handleProgressUpdate = (step: string, progress: number) => {
+    // 可以根据progress值设置不同的处理步骤
+    if (step.includes('人脸')) {
+      actions.setProcessingStep('face_detection');
+    } else if (step.includes('抠取') || step.includes('分割')) {
+      actions.setProcessingStep('segmentation');
+    } else if (step.includes('生成')) {
+      actions.setProcessingStep('generation');
+    }
+  };
+
+  const handleDownload = (imageUrl: string) => {
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = `id-photo-${Date.now()}.png`;
+    link.click();
   };
 
   return (
@@ -38,7 +42,7 @@ function App() {
       <Header />
 
       <main className="container mx-auto px-4 py-8 max-w-7xl">
-        {!uploadedImage ? (
+        {!state.uploadedImage ? (
           // 初始上传状态
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <UploadZone onImageUpload={handleImageUpload} />
@@ -48,33 +52,31 @@ function App() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
               <PreviewArea
-                uploadedImage={uploadedImage}
-                processedImage={processedImage}
-                isProcessing={isProcessing}
-                onReset={handleReset}
+                uploadedImage={state.uploadedImage}
+                processedImage={state.processedImage}
+                isProcessing={state.isProcessing}
+                processingStep={state.processingStep}
+                onReset={actions.reset}
+                onDownload={handleDownload}
               />
             </div>
 
             <div className="space-y-6">
               <ChatInterface
-                uploadedImage={uploadedImage}
-                onProcessingStart={() => setIsProcessing(true)}
+                uploadedImage={state.uploadedImage}
+                onProcessingStart={() => actions.setProcessing(true)}
                 onProcessingComplete={handleImageProcess}
+                onProgressUpdate={handleProgressUpdate}
               />
             </div>
           </div>
         )}
 
-        {processedImage && (
+        {state.processedImage && (
           <PhotoResult
-            imageUrl={processedImage}
-            onDownload={() => {
-              const link = document.createElement('a');
-              link.href = processedImage;
-              link.download = 'id-photo.png';
-              link.click();
-            }}
-            onReset={handleReset}
+            imageUrl={state.processedImage}
+            onDownload={() => handleDownload(state.processedImage!)}
+            onReset={actions.reset}
           />
         )}
       </main>

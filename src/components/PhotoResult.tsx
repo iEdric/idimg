@@ -1,4 +1,5 @@
 import { Download, RotateCcw, Share2, CheckCircle } from 'lucide-react';
+import { PHOTO_SPECIFICATIONS } from '../constants';
 
 interface PhotoResultProps {
   imageUrl: string;
@@ -69,16 +70,16 @@ export const PhotoResult = ({ imageUrl, onDownload, onReset }: PhotoResultProps)
         <div className="mt-6 pt-4 border-t border-border">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-2xl font-bold text-primary">1:1</div>
-              <div className="text-sm text-text-secondary">标准比例</div>
+              <div className="text-2xl font-bold text-primary">{PHOTO_SPECIFICATIONS.ratio}</div>
+              <div className="text-sm text-text-secondary">{PHOTO_SPECIFICATIONS.ratioLabel}</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-primary">300 DPI</div>
-              <div className="text-sm text-text-secondary">高分辨率</div>
+              <div className="text-2xl font-bold text-primary">{PHOTO_SPECIFICATIONS.dpi}</div>
+              <div className="text-sm text-text-secondary">{PHOTO_SPECIFICATIONS.dpiLabel}</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-primary">PNG</div>
-              <div className="text-sm text-text-secondary">无损格式</div>
+              <div className="text-2xl font-bold text-primary">{PHOTO_SPECIFICATIONS.format}</div>
+              <div className="text-sm text-text-secondary">{PHOTO_SPECIFICATIONS.formatLabel}</div>
             </div>
           </div>
         </div>

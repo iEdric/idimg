@@ -65,6 +65,23 @@ src/
 
 ## 功能说明
 
+### 🧠 AI智能处理
+
+**人脸检测与验证**
+- 自动检测图片中的人脸
+- 验证照片是否只包含一个人
+- 评估人脸清晰度和质量
+
+**智能抠图**
+- AI自动识别和分割人物
+- 精确的边缘处理
+- 保持自然光影效果
+
+**证件照生成**
+- 基于提示词的智能生成
+- 支持多种尺寸和背景
+- 专业的光线和风格调整
+
 ### 支持的证件照类型
 - **1寸证件照** - 标准尺寸 (33×48mm)
 - **2寸证件照** - 大尺寸 (35×49mm)
@@ -75,7 +92,48 @@ src/
 - "生成1寸证件照，白色背景"
 - "调整为蓝色背景，优化面部光线"
 - "生成护照尺寸，红色背景"
+- "创建专业商务风格的证件照"
+
+### API功能
+- 人脸检测API (`/api/face-detection`)
+- 人物抠图API (`/api/person-segmentation`)
+- 证件照生成API (`/api/id-photo-generation`)
 - "美化图片，调整对比度"
+
+## 环境配置
+
+### 环境变量
+创建 `.env` 文件并配置以下变量：
+
+```bash
+# API Configuration
+VITE_API_BASE_URL=http://localhost:3001
+VITE_API_KEY=your_api_key_here
+
+# App Configuration
+VITE_APP_NAME=AI证件照生成器
+VITE_APP_VERSION=1.0.0
+
+# Feature Flags
+VITE_ENABLE_FACE_DETECTION=true
+VITE_ENABLE_PERSON_SEGMENTATION=true
+VITE_ENABLE_ID_PHOTO_GENERATION=true
+```
+
+### 后端API要求
+需要实现以下API端点：
+
+1. **POST** `/api/face-detection`
+   - 请求: `{ image: "base64字符串" }`
+   - 响应: `{ hasFace: boolean, faceCount: number, faces: [...] }`
+
+2. **POST** `/api/person-segmentation`
+   - 请求: `{ image: "base64字符串" }`
+   - 响应: `{ mask: "base64", segmentedImage: "base64", processingTime: number }`
+
+3. **POST** `/api/id-photo-generation`
+   - 请求: `{ image: "base64", options: {...}, prompt: "提示词" }`
+   - 响应: `{ image: "base64", size: {...}, format: "png", processingTime: number }`
 
 ## 自定义配置
 

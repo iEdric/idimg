@@ -1,46 +1,39 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
 import { UploadedImage } from '../App';
+import { PHOTO_SUGGESTIONS, API_CONFIG, UI_CONFIG } from '../constants';
+import { useChatMessages } from '../hooks/useChatMessages';
+import { usePhotoProcessing } from '../hooks/usePhotoProcessing';
 import { clsx } from 'clsx';
-
-interface Message {
-  id: string;
-  content: string;
-  role: 'user' | 'assistant';
-  timestamp: Date;
-  isLoading?: boolean;
-}
 
 interface ChatInterfaceProps {
   uploadedImage: UploadedImage;
   onProcessingStart: () => void;
   onProcessingComplete: (processedUrl: string) => void;
+  onProgressUpdate?: (step: string, progress: number) => void;
 }
-
-const photoSuggestions = [
-  "生成1寸证件照，白色背景",
-  "生成2寸证件照，蓝色背景",
-  "调整为标准证件照尺寸",
-  "优化面部光线和对比度",
-  "调整背景颜色为红色",
-  "生成护照尺寸照片"
-];
 
 export const ChatInterface = ({
   uploadedImage,
   onProcessingStart,
-  onProcessingComplete
+  onProcessingComplete,
+  onProgressUpdate
 }: ChatInterfaceProps) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: '您好！我可以帮您生成专业的证件照。请告诉我您想要什么样的证件照效果，比如尺寸、背景颜色等。',
-      role: 'assistant',
-      timestamp: new Date(),
-    }
-  ]);
+  const { processPhoto, parseInstruction } = usePhotoProcessing();
+  const initialMessage = {
+    content: '您好！我可以帮您生成专业的证件照。请告诉我您想要什么样的证件照效果，比如尺寸、背景颜色等。',
+    role: 'assistant' as const,
+  };
+
+  const {
+    messages,
+    addMessage,
+    updateMessage,
+    isLoading,
+    setIsLoading
+  } = useChatMessages([initialMessage]);
+
   const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -51,27 +44,34 @@ export const ChatInterface = ({
     scrollToBottom();
   }, [messages]);
 
-  const generateResponse = async (userMessage: string): Promise<string> => {
-    // 模拟AI处理时间
-    await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 2000));
-
+  const generateResponse = useCallback(async (userMessage: string): Promise<string> => {
     // 检查是否是生成证件照的请求
-    const isPhotoGeneration = userMessage.includes('生成') ||
-                             userMessage.includes('创建') ||
-                             userMessage.includes('制作') ||
-                             userMessage.includes('调整');
+    const isPhotoGeneration = /\b(生成|创建|制作|调整)\b/.test(userMessage);
 
     if (isPhotoGeneration) {
-      // 模拟图片处理
-      onProcessingStart();
+      try {
+        onProcessingStart();
 
-      // 延迟后返回处理结果
-      setTimeout(() => {
-        // 这里应该调用实际的图片处理API，现在用原始图片作为模拟结果
-        onProcessingComplete(uploadedImage.url);
-      }, 2000);
+        // 解析用户指令
+        const options = parseInstruction(userMessage);
 
-      return `正在为您生成证件照，请稍候... 我会根据您的要求"${userMessage}"来处理图片。`;
+        // 执行完整的照片处理流程
+        const result = await processPhoto(
+          uploadedImage,
+          options,
+          userMessage,
+          onProgressUpdate
+        );
+
+        // 完成处理
+        onProcessingComplete(result.finalImage);
+
+        return `证件照生成完成！我根据您的要求"${userMessage}"生成了专业的证件照。图片已优化处理，适合官方使用。`;
+
+      } catch (error) {
+        console.error('Photo processing failed:', error);
+        throw error; // 让外层错误处理机制处理
+      }
     }
 
     // 其他对话响应
@@ -81,58 +81,51 @@ export const ChatInterface = ({
       "根据您的要求，我来调整图片的尺寸和比例。",
       "我来帮您美化一下这张照片，让它看起来更专业。",
       "明白了，我会按照您的要求处理这张图片。",
-    ];
+    ] as const;
+
+    // 模拟响应延迟
+    const delay = API_CONFIG.SIMULATION_DELAY_MIN +
+                  Math.random() * (API_CONFIG.SIMULATION_DELAY_MAX - API_CONFIG.SIMULATION_DELAY_MIN);
+    await new Promise(resolve => setTimeout(resolve, delay));
 
     return responses[Math.floor(Math.random() * responses.length)];
-  };
+  }, [uploadedImage, parseInstruction, processPhoto, onProcessingStart, onProcessingComplete, onProgressUpdate]);
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
+    // 添加用户消息
+    addMessage({
       content: content.trim(),
       role: 'user',
-      timestamp: new Date(),
-    };
+    });
 
-    const loadingMessage: Message = {
-      id: (Date.now() + 1).toString(),
+    // 添加加载中的助手消息
+    const loadingMessageId = `loading-${Date.now()}`;
+    addMessage({
       content: '',
       role: 'assistant',
-      timestamp: new Date(),
       isLoading: true,
-    };
+    });
 
-    setMessages(prev => [...prev, userMessage, loadingMessage]);
     setInputMessage('');
     setIsLoading(true);
 
     try {
       const response = await generateResponse(content);
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.id === loadingMessage.id
-            ? { ...msg, content: response, isLoading: false }
-            : msg
-        )
-      );
+      updateMessage(loadingMessageId, {
+        content: response,
+        isLoading: false
+      });
     } catch (error) {
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.id === loadingMessage.id
-            ? {
-                ...msg,
-                content: '抱歉，处理过程中出现错误，请重试。',
-                isLoading: false
-              }
-            : msg
-        )
-      );
+      updateMessage(loadingMessageId, {
+        content: '抱歉，处理过程中出现错误，请重试。',
+        isLoading: false
+      });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isLoading, addMessage, generateResponse, updateMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -153,7 +146,7 @@ export const ChatInterface = ({
       </div>
 
       {/* 消息区域 */}
-      <div className="flex-1 overflow-y-auto smooth-scrollbar max-h-96">
+      <div className="flex-1 overflow-y-auto smooth-scrollbar" style={{ maxHeight: UI_CONFIG.MAX_MESSAGE_HEIGHT + 'rem' }}>
         <div className="space-y-4 pb-4">
           {messages.map((message) => (
             <div key={message.id} className="flex gap-3">
@@ -196,7 +189,7 @@ export const ChatInterface = ({
         <div className="mb-4">
           <p className="text-sm text-text-secondary mb-2">快捷指令：</p>
           <div className="grid grid-cols-1 gap-2">
-            {photoSuggestions.slice(0, 3).map((suggestion, index) => (
+            {PHOTO_SUGGESTIONS.slice(0, 3).map((suggestion, index) => (
               <button
                 key={index}
                 onClick={() => handleSuggestionClick(suggestion)}
