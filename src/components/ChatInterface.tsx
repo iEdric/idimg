@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
 import { UploadedImage } from '../hooks/useAppState';
+import { Message } from '../types/chat';
 import { PHOTO_SUGGESTIONS, API_CONFIG, UI_CONFIG } from '../constants';
 import { useChatMessages } from '../hooks/useChatMessages';
 import { usePhotoProcessing } from '../hooks/usePhotoProcessing';
@@ -20,10 +21,6 @@ export const ChatInterface = ({
   onProgressUpdate
 }: ChatInterfaceProps) => {
   const { processPhoto, parseInstruction } = usePhotoProcessing();
-  const initialMessage: Omit<Message, 'id' | 'timestamp'> = {
-    content: '您好！我可以帮您生成专业的证件照。请告诉我您想要什么样的证件照效果，比如尺寸、背景颜色等。',
-    role: 'assistant',
-  };
 
   const {
     messages,
@@ -31,7 +28,17 @@ export const ChatInterface = ({
     updateMessage,
     isLoading,
     setIsLoading
-  } = useChatMessages([initialMessage]);
+  } = useChatMessages();
+
+  // 添加初始消息
+  useEffect(() => {
+    if (messages.length === 0) {
+      addMessage({
+        content: '您好！我可以帮您生成专业的证件照。请告诉我您想要什么样的证件照效果，比如尺寸、背景颜色等。',
+        role: 'assistant',
+      });
+    }
+  }, [messages.length, addMessage]);
 
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);

@@ -9,7 +9,6 @@ import { UploadedImage } from './hooks/useAppState';
 
 function App() {
   const { state, actions } = useAppState();
-  const { processPhoto } = usePhotoProcessing();
 
   const handleImageUpload = (image: UploadedImage) => {
     actions.setUploadedImage(image);
@@ -87,4 +86,3 @@ function App() {
 }
 
 export default App;
-export type { UploadedImage };
